@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var timerViewModel = TimerViewModel()
     @StateObject private var motionViewModel = MotionViewModel()
+    @State private var isGoResultView: Bool = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -32,6 +33,7 @@ struct ContentView: View {
                         .foregroundColor(.white)
                         .font(.largeTitle)
                     
+                    // Show the G-meter
                     ZStack {
                         // Outer Circle
                         ZStack {
@@ -72,28 +74,52 @@ struct ContentView: View {
                         Button(action: timerViewModel.startTimer) {
                             Text("START")
                                 .font(.title)
-                                .frame(width: 130, height: 50)
+                                .frame(width: 120, height: 50)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
                                         .stroke(Color.red, lineWidth: 3)
                                 )
                         }
                         .foregroundColor(.red)
+                        .padding()
                         
                         // Lap Stop Button
                         Button(action: timerViewModel.stopTimer) {
                             Text("STOP")
                                 .font(.title)
-                                .frame(width: 130, height: 50)
+                                .frame(width: 120, height: 50)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
                                         .stroke(Color.red, lineWidth: 3)
                                 )
                         }
                         .foregroundColor(.red)
+                        .padding()
                     } // End of HStack
 //                    .padding()
+//                    Spacer()
+                    
+                    Button(action: {
+                        isGoResultView = true
+                    }                    ) {
+                        Text("SHOW RESULTS")
+                            .font(.title)
+                            .frame(width: 280, height: 50)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.white, lineWidth: 3)
+                            )
+                    }
+                    .foregroundColor(.white)
+                    .sheet(isPresented: $isGoResultView) {
+                        ResultView()
+                    }
+//                    .fullScreenCover(isPresented: $isGoResultView) {
+//                        ResultView()
+//                    }
+                    
                     Spacer()
+                    
                 } // End of VStack
             } // End of ZStack
         } // End of GeometryReader
