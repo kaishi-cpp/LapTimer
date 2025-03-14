@@ -8,8 +8,12 @@
 import SwiftUI
 
 struct ContentView: View {
+    @ObservedObject var gpsVelocityData = GpsVelocityData()
+    @ObservedObject var locationCoordinateData = LocationCoordinateData()
+    
     @StateObject private var timerViewModel = TimerViewModel()
     @StateObject private var motionViewModel = MotionViewModel()
+    
     @State private var isGoResultView: Bool = false
     
     var body: some View {
@@ -21,17 +25,18 @@ struct ContentView: View {
                     .edgesIgnoringSafeArea(.all)
                 
                 VStack(spacing: 20) {
-                    
-                    Spacer()
+//                    Spacer()
                     
                     Text("LAP TIMER")
                         .foregroundColor(.white)
                         .font(.title)
 
-//                    Text("\(timerViewModel.count) ms")
                     Text(formatTime(timerViewModel.count))
                         .foregroundColor(.white)
                         .font(.largeTitle)
+                    
+                    Text("速度(Debug): \(gpsVelocityData.velocity, specifier: "%.2f") km/h")
+                        .foregroundColor(.white)
                     
                     // Show the G-meter
                     ZStack {
@@ -69,9 +74,16 @@ struct ContentView: View {
 
                     } // End of ZStack
                     
+//                    Spacer()
+                    
                     HStack {
                         // Lap Start Button
-                        Button(action: timerViewModel.startTimer) {
+                        Button(action: {
+                            motionViewModel.startDeviceMotionUpdates()
+                            gpsVelocityData.startMeasuring()
+                            timerViewModel.startTimer()
+                            locationCoordinateData.startMeasuring()
+                        }) {
                             Text("START")
                                 .font(.title)
                                 .frame(width: 120, height: 50)
@@ -84,7 +96,12 @@ struct ContentView: View {
                         .padding()
                         
                         // Lap Stop Button
-                        Button(action: timerViewModel.stopTimer) {
+                        Button(action: {
+                            motionViewModel.stopDeviceMotionUpdates()
+                            gpsVelocityData.stopMeasuring()
+                            timerViewModel.stopTimer()
+                            locationCoordinateData.stopMeasuring()
+                        }) {
                             Text("STOP")
                                 .font(.title)
                                 .frame(width: 120, height: 50)
@@ -96,8 +113,27 @@ struct ContentView: View {
                         .foregroundColor(.red)
                         .padding()
                     } // End of HStack
+                    .position(x: geometry.size.width / 2 + motionViewModel.gPositionOffset.x, y: geometry.size.width / 2 + motionViewModel.gPositionOffset.y)
 //                    .padding()
 //                    Spacer()
+                    
+                    // Lap Reset Button
+                    Button(action: {
+                        motionViewModel.resetData()
+                        timerViewModel.resetTimer()
+                        gpsVelocityData.resetData()
+                        locationCoordinateData.resetData()
+                    }) {
+                        Text("Reset")
+                            .font(.title)
+                            .frame(width: 120, height: 50)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.gray, lineWidth: 3)
+                            )
+                    }
+                    .foregroundColor(.gray)
+                    .padding()
                     
                     Button(action: {
                         isGoResultView = true
@@ -112,13 +148,18 @@ struct ContentView: View {
                     }
                     .foregroundColor(.white)
                     .sheet(isPresented: $isGoResultView) {
-                        ResultView()
+                        ResultView(
+                            vehicleGTimeData: motionViewModel.vehicleGTimeData, 
+                            velocityTimeData: gpsVelocityData.velocityTimeData,
+                            coordinateTimeData: locationCoordinateData.coordinateTimeData
+                        )
+//                        ResultView()
                     }
 //                    .fullScreenCover(isPresented: $isGoResultView) {
 //                        ResultView()
 //                    }
                     
-                    Spacer()
+//                    Spacer()
                     
                 } // End of VStack
             } // End of ZStack
